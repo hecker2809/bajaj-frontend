@@ -1,84 +1,107 @@
-
 import React, { useState } from 'react';
-import ResponseSection from './ResponseSection';
-import './App.css';
-function App() {
-  const [inputData, setInputData] = useState('');
-  const [error, setError] = useState('');
-  const [responseData, setResponseData] = useState(null);
-  const [selectedFilters, setSelectedFilters] = useState([]);
+import axios from 'axios';
+import jsonlint from 'jsonlint-mod';
+import { Form, Button } from 'react-bootstrap';
 
-const apiUrl = 'https://bajaj-backend-alpha-eight.vercel.app/bfhl';
+const App = () => {
+  const [jsonInput, setJsonInput] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [response, setResponse] = useState(null);
+  const [selectedOptions, setSelectedOptions] = useState([]);
+  const [filteredResponse, setFilteredResponse] = useState([]);
+
   const handleSubmit = async () => {
     try {
-      const jsonData = JSON.parse(inputData);
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(jsonData)
-      });
+      const parsedInput = jsonlint.parse(jsonInput);
+      setErrorMessage('');
 
-      const data = await response.json();
-      setResponseData(data);
-      setError('');
-    } catch (err) {
-      setError('Invalid JSON input');
+      // Call the API with parsed JSON input
+      const result = await axios.post('http://localhost:5000/bfhl', { data: parsedInput.data });
+      if (result.data.is_success) {
+        setResponse(result.data);
+        setFilteredResponse([]);  // Reset filtered response on new submit
+      } else {
+        setErrorMessage('Error: Invalid data input or API failure');
+      }
+    } catch (error) {
+      setErrorMessage('Invalid JSON format');
     }
   };
 
-  const handleFilterChange = (e) => {
-    const value = e.target.value;
-    setSelectedFilters(
-      selectedFilters.includes(value)
-        ? selectedFilters.filter((filter) => filter !== value)
-        : [...selectedFilters, value]
-    );
+  const handleDropdownChange = (e) => {
+    const selected = Array.from(e.target.selectedOptions, option => option.value);
+    setSelectedOptions(selected);
+    filterResponse(response, selected);
+  };
+
+  const filterResponse = (responseData, options) => {
+    let filteredData = [];
+
+    // Filter based on selected options
+    if (options.includes('Alphabets')) {
+      filteredData = [...filteredData, ...responseData.alphabets];
+    }
+    if (options.includes('Numbers')) {
+      filteredData = [...filteredData, ...responseData.numbers];
+    }
+    if (options.includes('Highest lowercase alphabet')) {
+      filteredData = [...filteredData, ...responseData.highest_lowercase_alphabet];
+    }
+
+    // Set filtered response; ensure it's always an array
+    setFilteredResponse(filteredData.length > 0 ? filteredData : ['No valid data']);
   };
 
   return (
-    <div className="App">
-      <h1>JSON Input</h1>
-      <textarea
-        value={inputData}
-        onChange={(e) => setInputData(e.target.value)}
-        placeholder="Enter JSON here..."
-      />
-      <button onClick={handleSubmit}>Submit</button>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {responseData && (
+    <div className="container mt-5">
+      <h1 className="mb-4">RA2111028030002</h1>
+
+      {/* JSON Input Form */}
+      <Form>
+        <Form.Group>
+          <Form.Label>API Input</Form.Label>
+          <Form.Control
+            as="textarea"
+            rows={3}
+            value={jsonInput}
+            onChange={e => setJsonInput(e.target.value)}
+            placeholder='{"data": ["M","1","334","4","B"]}'
+          />
+        </Form.Group>
+
+        <Button variant="primary" onClick={handleSubmit} className="mt-3">Submit</Button>
+      </Form>
+
+      {/* Error Message */}
+      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
+
+      {/* Multi-select Dropdown (only shows after successful response) */}
+      {response && (
         <>
-          <h2>Select Data to Display</h2>
-          <div>
-            <label>
-              <input
-                type="checkbox"
-                value="Alphabets"
-                onChange={handleFilterChange}
-              />
-              Alphabets
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                value="Numbers"
-                onChange={handleFilterChange}
-              />
-              Numbers
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                value="Highest lowercase alphabet"
-                onChange={handleFilterChange}
-              />
-              Highest lowercase alphabet
-            </label>
+          <div className="mt-4">
+            <Form.Group>
+              <Form.Label>Multi Filter</Form.Label>
+              <Form.Control as="select" multiple={true} onChange={handleDropdownChange}>
+                <option value="Alphabets">Alphabets</option>
+                <option value="Numbers">Numbers</option>
+                <option value="Highest lowercase alphabet">Highest lowercase alphabet</option>
+              </Form.Control>
+            </Form.Group>
           </div>
-          <ResponseSection data={responseData} selectedFilters={selectedFilters} />
+
+          {/* Filtered Response */}
+          <div className="mt-4">
+            <h4>Filtered Response</h4>
+            <p>{selectedOptions.join(", ")}: {filteredResponse.join(", ")}</p>
+          </div>
         </>
       )}
+    </div>
+  );
+};
+
+export default App;
+
     </div>
   );
 }
