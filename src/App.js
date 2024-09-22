@@ -7,7 +7,7 @@ function App() {
   const [responseData, setResponseData] = useState(null);
   const [selectedFilters, setSelectedFilters] = useState([]);
 
-const apiUrl = 'https://vercel.com/yash-aggarwals-projects-42087377/bajaj-backend/FrKrP9LU3cWY8jLWfQkKCMVLutM8';
+const apiUrl = 'https://bajaj-backend-alpha-eight.vercel.app/';
   const handleSubmit = async () => {
     try {
       const jsonData = JSON.parse(inputData);
