@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import ResponseSection from './ResponseSection';
+import './App.css';
 function App() {
   const [inputData, setInputData] = useState('');
   const [error, setError] = useState('');
