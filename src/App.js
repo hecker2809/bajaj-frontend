@@ -101,9 +101,3 @@ const App = () => {
 };
 
 export default App;
-
-    </div>
-  );
-}
-
-export default App;
